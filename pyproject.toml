@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "hide-python"
+version = "0.1.0"
+description = ""
+authors = ["Art Moskvin <amoskvin@me.com>"]
+readme = "README.md"
+packages = [{include = "hide"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+langchain = "^0.1.16"
+langchain-openai = "^0.1.3"
+langchainhub = "^0.1.15"
+requests = "^2.31.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
