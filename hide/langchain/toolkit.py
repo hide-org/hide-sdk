@@ -44,7 +44,7 @@ class HideToolkit(BaseToolkit):
             """
             try:
                 result = self.hide_client.run_task(project_id=self.project_id, command=command, alias=alias)
-                return result.stdOut
+                return f"exit code: {result.exitCode}\nstdout: {result.stdOut}\nstderr: {result.stdErr}"
             except Exception as e:
                 return f"Failed to run task: {e}"
 
