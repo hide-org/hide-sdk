@@ -26,10 +26,6 @@ class CreateProjectRequest(BaseModel):
         default=None,
         description="The dev container configuration to use for the project. If not provided, the configuration from the repository will be used. If the repository does not contain a dev container, the request will fail.",
     )
-    files: Optional[list[File]] = Field(
-        default=None,
-        description="The files to include in the project environment.",
-    )
 
 
 class Project(BaseModel):

@@ -1,6 +1,5 @@
 import pytest
 from unittest.mock import patch, Mock
-from pydantic import ValidationError
 from hide.client.hide_client import (
     FileInfo,
     HideClient,
@@ -27,7 +26,7 @@ def test_create_project_success(client):
         project = client.create_project(request_data)
         assert project == Project(id="123")
         mock_post.assert_called_once_with(
-            "http://localhost/projects", json=request_data.model_dump()
+            "http://localhost/projects", json=request_data.model_dump(exclude_unset=True)
         )
 
 
