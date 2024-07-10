@@ -13,11 +13,16 @@ class Repository(BaseModel):
     )
 
 
+class File(BaseModel):
+    path: str = Field(..., description="The path of the file.")
+    content: str = Field(..., description="The content of the file.")
+
+
 class CreateProjectRequest(BaseModel):
-    repo: Repository = Field(
+    repository: Repository = Field(
         ..., description="The repository to create the project from."
     )
-    devContainer: Optional[DevContainer] = Field(
+    devcontainer: Optional[DevContainer] = Field(
         default=None,
         description="The dev container configuration to use for the project. If not provided, the configuration from the repository will be used. If the repository does not contain a dev container, the request will fail.",
     )
@@ -38,11 +43,6 @@ class Task(BaseModel):
     command: str = Field(..., description="The shell command to run the task.")
 
 
-class File(BaseModel):
-    path: str = Field(..., description="The path of the file.")
-    content: str = Field(..., description="The content of the file.")
-
-
 class FileInfo(BaseModel):
     path: str = Field(..., description="The path of the file.")
 
@@ -53,10 +53,16 @@ class HideClient:
         self.base_url = base_url
 
     def create_project(self, request: CreateProjectRequest) -> Project:
-        response = requests.post(f"{self.base_url}/projects", json=request.model_dump())
+        response = requests.post(f"{self.base_url}/projects", json=request.model_dump(exclude_unset=True))
         if not response.ok:
             raise HideClientError(response.text)
         return Project.model_validate(response.json())
+
+    def delete_project(self, project: Project) -> bool:
+        response = requests.delete(f"{self.base_url}/projects/{project.id}")
+        if not response.ok:
+            raise HideClientError(response.text)
+        return response.status_code == 204
 
     def get_tasks(self, project_id: str) -> list[Task]:
         response = requests.get(f"{self.base_url}/projects/{project_id}/tasks")

@@ -1,11 +1,10 @@
 import os
 
+from hide.client.hide_client import HideClient
+from hide.langchain.toolkit import HideToolkit
 from langchain import hub
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_openai import ChatOpenAI
-
-from hide.client.hide_client import HideClient
-from hide.langchain.toolkit import HideToolkit
 
 OPENAI_API_KEY = "ENTER YOUR KEY"
 HIDE_BASE_URL = "http://localhost:8080"

@@ -1,8 +1,8 @@
 from enum import Enum
-from typing import Annotated, List, Union, Optional, Dict, Any
-from pydantic import BaseModel, Field, RootModel, constr
+from typing import Annotated, List, Union, Optional, Dict, Any, Mapping
+from pydantic import BaseModel, Field, RootModel
 
-LifeCycleCommand = Union[str, List[str], Dict[str, Union[str, List[str]]]]
+LifeCycleCommand = Union[str, List[str], Mapping[str, Union[str, List[str]]]]
 
 
 class ForwardPort(RootModel):
