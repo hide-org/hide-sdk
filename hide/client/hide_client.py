@@ -13,9 +13,11 @@ from hide.model import (
     TaskResult,
 )
 
+DEFAULT_BASE_URL = "http://localhost:8080"
+
 
 class HideClient:
-    def __init__(self, base_url: str) -> None:
+    def __init__(self, base_url: str = DEFAULT_BASE_URL) -> None:
         self.base_url = base_url
 
     def create_project(
