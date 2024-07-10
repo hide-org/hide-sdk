@@ -20,7 +20,7 @@ def client():
 
 
 def test_create_project_success(client):
-    request_data = CreateProjectRequest(repo=Repository(url="http://example.com/repo.git"))
+    request_data = CreateProjectRequest(repository=Repository(url="http://example.com/repo.git"))
     response_data = {"id": "123"}
     with patch("requests.post") as mock_post:
         mock_post.return_value = Mock(ok=True, json=lambda: response_data)
@@ -32,7 +32,7 @@ def test_create_project_success(client):
 
 
 def test_create_project_failure(client):
-    request_data = CreateProjectRequest(repo=Repository(url="http://example.com/repo.git"))
+    request_data = CreateProjectRequest(repository=Repository(url="http://example.com/repo.git"))
     with patch("requests.post") as mock_post:
         mock_post.return_value = Mock(ok=False, text="Error")
         with pytest.raises(HideClientError, match="Error"):
