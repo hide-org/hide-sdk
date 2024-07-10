@@ -1,1 +1,1 @@
-from .client.hide_client import HideClient
+from .client.hide_client import HideClient as Client

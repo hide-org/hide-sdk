@@ -1,41 +1,47 @@
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import patch, Mock
+
 from hide.client.hide_client import (
+    CreateProjectRequest,
+    File,
     FileInfo,
     HideClient,
-    CreateProjectRequest,
+    HideClientError,
     Project,
     Repository,
     Task,
     TaskResult,
-    File,
-    HideClientError,
 )
 
 
 @pytest.fixture
-def client():
+def client() -> HideClient:
     return HideClient(base_url="http://localhost")
 
 
-def test_create_project_success(client):
-    request_data = CreateProjectRequest(repository=Repository(url="http://example.com/repo.git"))
+def test_create_project_success(client: HideClient):
+    repository = Repository(url="http://example.com/repo.git")
+    request_data = CreateProjectRequest(repository=repository)
     response_data = {"id": "123"}
+
     with patch("requests.post") as mock_post:
         mock_post.return_value = Mock(ok=True, json=lambda: response_data)
-        project = client.create_project(request_data)
+        project = client.create_project(repository=repository)
         assert project == Project(id="123")
         mock_post.assert_called_once_with(
-            "http://localhost/projects", json=request_data.model_dump(exclude_unset=True)
+            "http://localhost/projects",
+            json=request_data.model_dump(exclude_unset=True),
         )
 
 
-def test_create_project_failure(client):
-    request_data = CreateProjectRequest(repository=Repository(url="http://example.com/repo.git"))
+def test_create_project_failure(client: HideClient):
+    repository = Repository(url="http://example.com/repo.git")
+
     with patch("requests.post") as mock_post:
         mock_post.return_value = Mock(ok=False, text="Error")
         with pytest.raises(HideClientError, match="Error"):
-            client.create_project(request_data)
+            client.create_project(repository=repository)
 
 
 def test_get_tasks_success(client):
