@@ -89,7 +89,7 @@ class Toolkit:
             list_files,
         ]
 
-    def as_langchain(self) -> LangchainToolkit:
+    def as_langchain(self) -> "LangchainToolkit":
         from hide.langchain.toolkit import LangchainToolkit
 
         return LangchainToolkit(toolkit=self)
