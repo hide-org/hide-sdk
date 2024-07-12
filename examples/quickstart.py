@@ -10,6 +10,14 @@ project = hide_client.create_project(
     devcontainer=ImageDevContainer(
         image="mcr.microsoft.com/devcontainers/python:3.12",
         onCreateCommand="pip install -r requirements.txt",
+        customizations={
+            "hide": {
+                "tasks": [
+                    {"alias": "test", "command": "poetry run pytest"},
+                    {"alias": "run", "command": "poetry run uvicorn main:main"},
+                ]
+            }
+        },
     ),
 )
 

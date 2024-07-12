@@ -1,9 +1,13 @@
 [tool.poetry]
-name = "hide-python"
+name = "hide-py"
 version = "0.1.0"
-description = ""
+description = "Hide: Headless IDE for coding agents"
+license = "MIT"
 authors = ["Art Moskvin <amoskvin@me.com>"]
 readme = "README.md"
+homepage = "https://hide.sh"
+repository = "https://github.com/artmoskvin/hide-python"
+documentation = "https://hide.sh"
 packages = [{include = "hide"}]
 
 [tool.poetry.dependencies]
