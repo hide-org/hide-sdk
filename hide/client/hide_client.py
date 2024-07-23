@@ -78,8 +78,17 @@ class HideClient:
             raise HideClientError(response.text)
         return File.model_validate(response.json())
 
-    def get_file(self, project_id: str, path: str) -> File:
-        response = requests.get(f"{self.base_url}/projects/{project_id}/files/{path}")
+    def get_file(
+        self,
+        project_id: str,
+        path: str,
+        show_line_numbers: bool = False,
+        start_line: int = 1,
+        num_lines: int = 100,
+    ) -> File:
+        response = requests.get(
+            f"{self.base_url}/projects/{project_id}/files/{path}?showLineNumbers={show_line_numbers}&startLine={start_line}&numLines={num_lines}"
+        )
         if not response.ok:
             raise HideClientError(response.text)
         return File.model_validate(response.json())
