@@ -136,7 +136,7 @@ def test_create_file_failure(client):
             client.create_file(project_id, path, content)
 
 
-def test_get_file_success(client):
+def test_get_file_with_defaults_success(client):
     project_id = "123"
     path = "README.md"
     response_data = {"path": path, "content": "Hello World"}
@@ -144,7 +144,48 @@ def test_get_file_success(client):
         mock_get.return_value = Mock(ok=True, json=lambda: response_data)
         file = client.get_file(project_id, path)
         assert file == File(path=path, content="Hello World")
-        mock_get.assert_called_once_with(f"http://localhost/projects/123/files/{path}")
+        mock_get.assert_called_once_with(
+            f"http://localhost/projects/123/files/{path}?showLineNumbers=False&startLine=1&numLines=100"
+        )
+
+
+def test_get_file_with_line_numbers_success(client):
+    project_id = "123"
+    path = "README.md"
+    response_data = {"path": path, "content": "Hello World"}
+    with patch("requests.get") as mock_get:
+        mock_get.return_value = Mock(ok=True, json=lambda: response_data)
+        file = client.get_file(project_id, path, show_line_numbers=True)
+        assert file == File(path=path, content="Hello World")
+        mock_get.assert_called_once_with(
+            f"http://localhost/projects/123/files/{path}?showLineNumbers=True&startLine=1&numLines=100"
+        )
+
+
+def test_get_file_with_start_line_success(client):
+    project_id = "123"
+    path = "README.md"
+    response_data = {"path": path, "content": "Hello World"}
+    with patch("requests.get") as mock_get:
+        mock_get.return_value = Mock(ok=True, json=lambda: response_data)
+        file = client.get_file(project_id, path, start_line=10)
+        assert file == File(path=path, content="Hello World")
+        mock_get.assert_called_once_with(
+            f"http://localhost/projects/123/files/{path}?showLineNumbers=False&startLine=10&numLines=100"
+        )
+
+
+def test_get_file_with_num_lines_success(client):
+    project_id = "123"
+    path = "README.md"
+    response_data = {"path": path, "content": "Hello World"}
+    with patch("requests.get") as mock_get:
+        mock_get.return_value = Mock(ok=True, json=lambda: response_data)
+        file = client.get_file(project_id, path, num_lines=10)
+        assert file == File(path=path, content="Hello World")
+        mock_get.assert_called_once_with(
+            f"http://localhost/projects/123/files/{path}?showLineNumbers=False&startLine=1&numLines=10"
+        )
 
 
 def test_get_file_failure(client):
