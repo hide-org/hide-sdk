@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -45,3 +46,31 @@ class Task(BaseModel):
 
 class FileInfo(BaseModel):
     path: str = Field(..., description="The path of the file.")
+
+
+class FileUpdateType(str, Enum):
+    UDIFF = "udiff"
+    LINEDIFF = "linediff"
+    OVERWRITE = "overwrite"
+
+
+class UdiffUpdate(BaseModel):
+    patch: str = Field(..., description="The patch to apply to the file.")
+
+
+class LineDiffUpdate(BaseModel):
+    start_line: int = Field(
+        ...,
+        description="The line number to start the diff from.",
+        serialization_alias="startLine",
+    )
+    end_line: int = Field(
+        ...,
+        description="The line number to end the diff at, inclusive.",
+        serialization_alias="endLine",
+    )
+    content: str = Field(..., description="The content of the diff.")
+
+
+class OverwriteUpdate(BaseModel):
+    content: str = Field(..., description="The new content of the file.")

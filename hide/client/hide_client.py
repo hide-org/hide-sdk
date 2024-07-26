@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 import requests
 
@@ -7,10 +7,14 @@ from hide.model import (
     CreateProjectRequest,
     File,
     FileInfo,
+    FileUpdateType,
+    LineDiffUpdate,
+    OverwriteUpdate,
     Project,
     Repository,
     Task,
     TaskResult,
+    UdiffUpdate,
 )
 
 DEFAULT_BASE_URL = "http://localhost:8080"
@@ -93,12 +97,35 @@ class HideClient:
             raise HideClientError(response.text)
         return File.model_validate(response.json())
 
-    def update_file(self, project_id: str, path: str, content: str) -> File:
-        print(f"Updating file {path} in project {project_id}")
-        print(content)
+    def update_file(
+        self,
+        project_id: str,
+        path: str,
+        type: FileUpdateType,
+        update: Union[UdiffUpdate, LineDiffUpdate, OverwriteUpdate],
+    ) -> File:
+        match type:
+            case FileUpdateType.UDIFF:
+                payload = {
+                    "type": type.value,
+                    "udiff": update.model_dump(by_alias=True),
+                }
+            case FileUpdateType.LINEDIFF:
+                payload = {
+                    "type": type.value,
+                    "linediff": update.model_dump(by_alias=True),
+                }
+            case FileUpdateType.OVERWRITE:
+                payload = {
+                    "type": type.value,
+                    "overwrite": update.model_dump(by_alias=True),
+                }
+            case _:
+                raise ValueError(f"Invalid file update type: {type}")
+
         response = requests.put(
             f"{self.base_url}/projects/{project_id}/files/{path}",
-            json={"content": content},
+            json=payload,
         )
         if not response.ok:
             raise HideClientError(response.text)
