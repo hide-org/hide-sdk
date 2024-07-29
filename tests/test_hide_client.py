@@ -13,6 +13,7 @@ from hide.client.hide_client import (
     Task,
     TaskResult,
 )
+from hide.model import FileUpdateType, LineDiffUpdate, OverwriteUpdate, UdiffUpdate
 
 
 @pytest.fixture
@@ -197,7 +198,7 @@ def test_get_file_failure(client):
             client.get_file(project_id, path)
 
 
-def test_update_file_success(client):
+def test_update_file_with_udiff_succeeds(client):
     project_id = "123"
     path = "README.md"
     content = "Updated Content"
@@ -205,21 +206,67 @@ def test_update_file_success(client):
         mock_put.return_value = Mock(
             ok=True, json=lambda: {"path": path, "content": content}
         )
-        file = client.update_file(project_id, path, content)
+        file = client.update_file(
+            project_id, path, FileUpdateType.UDIFF, UdiffUpdate(patch="test-patch")
+        )
         assert file == File(path=path, content=content)
         mock_put.assert_called_once_with(
-            f"http://localhost/projects/123/files/{path}", json={"content": content}
+            f"http://localhost/projects/123/files/{path}",
+            json={"type": "udiff", "udiff": {"patch": "test-patch"}},
+        )
+
+
+def test_update_file_with_linediff_succeeds(client):
+    project_id = "123"
+    path = "README.md"
+    content = "Updated Content"
+    with patch("requests.put") as mock_put:
+        mock_put.return_value = Mock(
+            ok=True, json=lambda: {"path": path, "content": content}
+        )
+        file = client.update_file(
+            project_id,
+            path,
+            FileUpdateType.LINEDIFF,
+            LineDiffUpdate(start_line=1, end_line=10, content="test-content"),
+        )
+        assert file == File(path=path, content=content)
+        mock_put.assert_called_once_with(
+            f"http://localhost/projects/123/files/{path}",
+            json={
+                "type": "linediff",
+                "linediff": {"startLine": 1, "endLine": 10, "content": "test-content"},
+            },
+        )
+
+
+def test_update_file_with_overwrite_succeeds(client):
+    project_id = "123"
+    path = "README.md"
+    content = "Updated Content"
+    with patch("requests.put") as mock_put:
+        mock_put.return_value = Mock(
+            ok=True, json=lambda: {"path": path, "content": content}
+        )
+        file = client.update_file(
+            project_id, path, FileUpdateType.OVERWRITE, OverwriteUpdate(content=content)
+        )
+        assert file == File(path=path, content=content)
+        mock_put.assert_called_once_with(
+            f"http://localhost/projects/123/files/{path}",
+            json={"type": "overwrite", "overwrite": {"content": content}},
         )
 
 
 def test_update_file_failure(client):
     project_id = "123"
     path = "README.md"
-    content = "Updated Content"
     with patch("requests.put") as mock_put:
         mock_put.return_value = Mock(ok=False, text="Error")
         with pytest.raises(HideClientError, match="Error"):
-            client.update_file(project_id, path, content)
+            client.update_file(
+                project_id, path, FileUpdateType.UDIFF, UdiffUpdate(patch="test-patch")
+            )
 
 
 def test_delete_file_success(client):
