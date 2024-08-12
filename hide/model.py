@@ -1,5 +1,5 @@
-from enum import Enum
-from typing import Optional
+from enum import Enum, IntEnum
+from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -14,9 +14,94 @@ class Repository(BaseModel):
     )
 
 
+class DiagnosticSeverity(IntEnum):
+    Error = 1
+    Warning = 2
+    Information = 3
+    Hint = 4
+
+
+class DiagnosticTag(IntEnum):
+    Unnecessary = 1
+    Deprecated = 2
+
+
+class Position(BaseModel):
+    line: int
+    character: int
+
+
+class Range(BaseModel):
+    start: Position
+    end: Position
+
+
+class Location(BaseModel):
+    uri: str
+    range: Range
+
+
+class DiagnosticRelatedInformation(BaseModel):
+    location: Location
+    message: str
+
+
+class CodeDescription(BaseModel):
+    href: str
+
+
+class Diagnostic(BaseModel):
+    range: Range
+    severity: Optional[DiagnosticSeverity] = None
+    code: Optional[Union[int, str]] = None
+    code_description: Optional[CodeDescription] = Field(None, alias="codeDescription")
+    source: Optional[str] = None
+    message: str
+    tags: Optional[List[DiagnosticTag]] = None
+    related_information: Optional[List[DiagnosticRelatedInformation]] = Field(
+        None, alias="relatedInformation"
+    )
+    data: Optional[Union[dict, list]] = None
+
+
 class File(BaseModel):
     path: str = Field(..., description="The path of the file.")
     content: str = Field(..., description="The content of the file.")
+    diagnostics: List[Diagnostic] = Field(default_factory=list)
+
+    def __str__(self) -> str:
+        lines = self.content.split("\n")
+        output = []
+
+        for i, line in enumerate(lines):
+            output.append(f"{i + 1:4d} | {line}")
+
+            for diagnostic in self.diagnostics:
+                if diagnostic.range.start.line <= i <= diagnostic.range.end.line:
+                    # Add carets
+                    start = (
+                        diagnostic.range.start.character
+                        if i == diagnostic.range.start.line
+                        else 0
+                    )
+                    end = (
+                        diagnostic.range.end.character
+                        if i == diagnostic.range.end.line
+                        else len(line)
+                    )
+                    caret_line = " " * (start + 6) + "^" * (end - start)
+                    output.append(caret_line)
+
+                    # Add diagnostic message
+                    severity = (
+                        diagnostic.severity.name
+                        if diagnostic.severity
+                        else "DIAGNOSTIC"
+                    )
+                    output.append(f"{severity}: {diagnostic.message}")
+                    output.append("")  # Add an empty line for readability
+
+        return "\n".join(output)
 
 
 class CreateProjectRequest(BaseModel):
