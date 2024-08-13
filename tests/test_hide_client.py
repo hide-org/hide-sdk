@@ -146,7 +146,7 @@ def test_get_file_with_defaults_success(client):
         file = client.get_file(project_id, path)
         assert file == File(path=path, content="Hello World")
         mock_get.assert_called_once_with(
-            f"http://localhost/projects/123/files/{path}?showLineNumbers=False&startLine=1&numLines=100"
+            f"http://localhost/projects/123/files/{path}?showLineNumbers=False&startLine=1&numLines=1000"
         )
 
 
@@ -159,7 +159,7 @@ def test_get_file_with_line_numbers_success(client):
         file = client.get_file(project_id, path, show_line_numbers=True)
         assert file == File(path=path, content="Hello World")
         mock_get.assert_called_once_with(
-            f"http://localhost/projects/123/files/{path}?showLineNumbers=True&startLine=1&numLines=100"
+            f"http://localhost/projects/123/files/{path}?showLineNumbers=True&startLine=1&numLines=1000"
         )
 
 
@@ -172,7 +172,7 @@ def test_get_file_with_start_line_success(client):
         file = client.get_file(project_id, path, start_line=10)
         assert file == File(path=path, content="Hello World")
         mock_get.assert_called_once_with(
-            f"http://localhost/projects/123/files/{path}?showLineNumbers=False&startLine=10&numLines=100"
+            f"http://localhost/projects/123/files/{path}?showLineNumbers=False&startLine=10&numLines=1000"
         )
 
 
