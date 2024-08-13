@@ -88,7 +88,7 @@ class HideClient:
         path: str,
         show_line_numbers: bool = False,
         start_line: int = 1,
-        num_lines: int = 100,
+        num_lines: int = 1000,
     ) -> File:
         response = requests.get(
             f"{self.base_url}/projects/{project_id}/files/{path}?showLineNumbers={show_line_numbers}&startLine={start_line}&numLines={num_lines}"
