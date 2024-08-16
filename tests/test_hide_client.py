@@ -13,7 +13,12 @@ from hide.client.hide_client import (
     Task,
     TaskResult,
 )
-from hide.model import FileUpdateType, LineDiffUpdate, OverwriteUpdate, UdiffUpdate
+from hide.model import LineDiffUpdate, OverwriteUpdate, UdiffUpdate
+
+PROJECT_ID = "123"
+PATH = "file.txt"
+CONTENT = "Hello World"
+FILE = {"path": PATH, "lines": [{"number": 1, "content": CONTENT}]}
 
 
 @pytest.fixture
@@ -46,193 +51,145 @@ def test_create_project_failure(client: HideClient):
 
 
 def test_get_tasks_success(client):
-    project_id = "123"
     response_data = [{"alias": "build", "command": "make build"}]
     with patch("requests.get") as mock_get:
         mock_get.return_value = Mock(ok=True, json=lambda: response_data)
-        tasks = client.get_tasks(project_id)
+        tasks = client.get_tasks(PROJECT_ID)
         assert len(tasks) == 1
         assert tasks[0] == Task(alias="build", command="make build")
         mock_get.assert_called_once_with("http://localhost/projects/123/tasks")
 
 
 def test_get_tasks_failure(client):
-    project_id = "123"
     with patch("requests.get") as mock_get:
         mock_get.return_value = Mock(ok=False, text="Error")
         with pytest.raises(HideClientError, match="Error"):
-            client.get_tasks(project_id)
+            client.get_tasks(PROJECT_ID)
 
 
 def test_run_task_command_success(client):
-    project_id = "123"
-    response_data = {"stdOut": "output", "stdErr": "", "exitCode": 0}
+    response_data = {"stdout": "output", "stderr": "", "exitCode": 0}
     with patch("requests.post") as mock_post:
         mock_post.return_value = Mock(ok=True, json=lambda: response_data)
-        result = client.run_task(project_id, command="echo Hello")
-        assert result == TaskResult(stdOut="output", stdErr="", exitCode=0)
+        result = client.run_task(PROJECT_ID, command="echo Hello")
+        assert result == TaskResult(stdout="output", stderr="", exit_code=0)
         mock_post.assert_called_once_with(
             "http://localhost/projects/123/tasks", json={"command": "echo Hello"}
         )
 
 
 def test_run_task_alias_success(client):
-    project_id = "123"
-    response_data = {"stdOut": "output", "stdErr": "", "exitCode": 0}
+    response_data = {"stdout": "output", "stderr": "", "exitCode": 0}
     with patch("requests.post") as mock_post:
         mock_post.return_value = Mock(ok=True, json=lambda: response_data)
-        result = client.run_task(project_id, alias="build")
-        assert result == TaskResult(stdOut="output", stdErr="", exitCode=0)
+        result = client.run_task(PROJECT_ID, alias="build")
+        assert result == TaskResult(stdout="output", stderr="", exit_code=0)
         mock_post.assert_called_once_with(
             "http://localhost/projects/123/tasks", json={"alias": "build"}
         )
 
 
 def test_run_task_failure(client):
-    project_id = "123"
     with patch("requests.post") as mock_post:
         mock_post.return_value = Mock(ok=False, text="Error")
         with pytest.raises(HideClientError, match="Error"):
-            client.run_task(project_id, command="echo Hello")
+            client.run_task(PROJECT_ID, command="echo Hello")
 
 
 def test_run_task_no_command_or_alias(client):
-    project_id = "123"
     with pytest.raises(
         HideClientError, match="Either 'command' or 'alias' must be provided"
     ):
-        client.run_task(project_id)
+        client.run_task(PROJECT_ID)
 
 
 def test_run_task_command_and_alias(client):
-    project_id = "123"
     with pytest.raises(
         HideClientError, match="Cannot provide both 'command' and 'alias'"
     ):
-        client.run_task(project_id, command="echo Hello", alias="build")
+        client.run_task(PROJECT_ID, command="echo Hello", alias="build")
 
 
 def test_create_file_success(client):
-    project_id = "123"
-    path = "README.md"
-    content = "Hello World"
-    response_data = {"path": path, "content": content}
     with patch("requests.post") as mock_post:
-        mock_post.return_value = Mock(ok=True, json=lambda: response_data)
-        file = client.create_file(project_id, path, content)
-        assert file == File(path=path, content=content)
+        mock_post.return_value = Mock(ok=True, json=lambda: FILE)
+        file = client.create_file(PROJECT_ID, PATH, CONTENT)
+        assert file == File.from_content(path=PATH, content=CONTENT)
         mock_post.assert_called_once_with(
             "http://localhost/projects/123/files",
-            json={"path": path, "content": content},
+            json={"path": PATH, "content": CONTENT},
         )
 
 
 def test_create_file_failure(client):
-    project_id = "123"
-    path = "README.md"
-    content = "Hello World"
     with patch("requests.post") as mock_post:
         mock_post.return_value = Mock(ok=False, text="Error")
         with pytest.raises(HideClientError, match="Error"):
-            client.create_file(project_id, path, content)
+            client.create_file(PROJECT_ID, PATH, CONTENT)
 
 
-def test_get_file_with_defaults_success(client):
-    project_id = "123"
-    path = "README.md"
-    response_data = {"path": path, "content": "Hello World"}
+def test_get_file(client):
     with patch("requests.get") as mock_get:
-        mock_get.return_value = Mock(ok=True, json=lambda: response_data)
-        file = client.get_file(project_id, path)
-        assert file == File(path=path, content="Hello World")
+        mock_get.return_value = Mock(ok=True, json=lambda: FILE)
+        file = client.get_file(PROJECT_ID, PATH)
+        assert file == File.from_content(path=PATH, content=CONTENT)
         mock_get.assert_called_once_with(
-            f"http://localhost/projects/123/files/{path}?showLineNumbers=False&startLine=1&numLines=1000"
+            url=f"http://localhost/projects/123/files/{PATH}",
+            params={"startLine": None, "numLines": None},
         )
 
 
-def test_get_file_with_line_numbers_success(client):
-    project_id = "123"
-    path = "README.md"
-    response_data = {"path": path, "content": "Hello World"}
+def test_get_file_with_start_line(client):
     with patch("requests.get") as mock_get:
-        mock_get.return_value = Mock(ok=True, json=lambda: response_data)
-        file = client.get_file(project_id, path, show_line_numbers=True)
-        assert file == File(path=path, content="Hello World")
+        mock_get.return_value = Mock(ok=True, json=lambda: FILE)
+        file = client.get_file(PROJECT_ID, PATH, start_line=10)
+        assert file == File.from_content(path=PATH, content="Hello World")
         mock_get.assert_called_once_with(
-            f"http://localhost/projects/123/files/{path}?showLineNumbers=True&startLine=1&numLines=1000"
+            url=f"http://localhost/projects/123/files/{PATH}",
+            params={"startLine": 10, "numLines": None},
         )
 
 
-def test_get_file_with_start_line_success(client):
-    project_id = "123"
-    path = "README.md"
-    response_data = {"path": path, "content": "Hello World"}
+def test_get_file_with_num_lines(client):
     with patch("requests.get") as mock_get:
-        mock_get.return_value = Mock(ok=True, json=lambda: response_data)
-        file = client.get_file(project_id, path, start_line=10)
-        assert file == File(path=path, content="Hello World")
+        mock_get.return_value = Mock(ok=True, json=lambda: FILE)
+        file = client.get_file(PROJECT_ID, PATH, num_lines=10)
+        assert file == File.from_content(path=PATH, content="Hello World")
         mock_get.assert_called_once_with(
-            f"http://localhost/projects/123/files/{path}?showLineNumbers=False&startLine=10&numLines=1000"
-        )
-
-
-def test_get_file_with_num_lines_success(client):
-    project_id = "123"
-    path = "README.md"
-    response_data = {"path": path, "content": "Hello World"}
-    with patch("requests.get") as mock_get:
-        mock_get.return_value = Mock(ok=True, json=lambda: response_data)
-        file = client.get_file(project_id, path, num_lines=10)
-        assert file == File(path=path, content="Hello World")
-        mock_get.assert_called_once_with(
-            f"http://localhost/projects/123/files/{path}?showLineNumbers=False&startLine=1&numLines=10"
+            url=f"http://localhost/projects/123/files/{PATH}",
+            params={"startLine": None, "numLines": 10},
         )
 
 
 def test_get_file_failure(client):
-    project_id = "123"
-    path = "README.md"
     with patch("requests.get") as mock_get:
         mock_get.return_value = Mock(ok=False, text="Error")
         with pytest.raises(HideClientError, match="Error"):
-            client.get_file(project_id, path)
+            client.get_file(PROJECT_ID, PATH)
 
 
 def test_update_file_with_udiff_succeeds(client):
-    project_id = "123"
-    path = "README.md"
-    content = "Updated Content"
     with patch("requests.put") as mock_put:
-        mock_put.return_value = Mock(
-            ok=True, json=lambda: {"path": path, "content": content}
-        )
-        file = client.update_file(
-            project_id, path, FileUpdateType.UDIFF, UdiffUpdate(patch="test-patch")
-        )
-        assert file == File(path=path, content=content)
+        mock_put.return_value = Mock(ok=True, json=lambda: FILE)
+        file = client.update_file(PROJECT_ID, PATH, UdiffUpdate(patch="test-patch"))
+        assert file == File.from_content(path=PATH, content=CONTENT)
         mock_put.assert_called_once_with(
-            f"http://localhost/projects/123/files/{path}",
+            f"http://localhost/projects/123/files/{PATH}",
             json={"type": "udiff", "udiff": {"patch": "test-patch"}},
         )
 
 
 def test_update_file_with_linediff_succeeds(client):
-    project_id = "123"
-    path = "README.md"
-    content = "Updated Content"
     with patch("requests.put") as mock_put:
-        mock_put.return_value = Mock(
-            ok=True, json=lambda: {"path": path, "content": content}
-        )
+        mock_put.return_value = Mock(ok=True, json=lambda: FILE)
         file = client.update_file(
-            project_id,
-            path,
-            FileUpdateType.LINEDIFF,
+            PROJECT_ID,
+            PATH,
             LineDiffUpdate(start_line=1, end_line=10, content="test-content"),
         )
-        assert file == File(path=path, content=content)
+        assert file == File.from_content(path=PATH, content=CONTENT)
         mock_put.assert_called_once_with(
-            f"http://localhost/projects/123/files/{path}",
+            f"http://localhost/projects/123/files/{PATH}",
             json={
                 "type": "linediff",
                 "linediff": {"startLine": 1, "endLine": 10, "content": "test-content"},
@@ -241,66 +198,49 @@ def test_update_file_with_linediff_succeeds(client):
 
 
 def test_update_file_with_overwrite_succeeds(client):
-    project_id = "123"
-    path = "README.md"
-    content = "Updated Content"
     with patch("requests.put") as mock_put:
-        mock_put.return_value = Mock(
-            ok=True, json=lambda: {"path": path, "content": content}
-        )
-        file = client.update_file(
-            project_id, path, FileUpdateType.OVERWRITE, OverwriteUpdate(content=content)
-        )
-        assert file == File(path=path, content=content)
+        mock_put.return_value = Mock(ok=True, json=lambda: FILE)
+        file = client.update_file(PROJECT_ID, PATH, OverwriteUpdate(content=CONTENT))
+        assert file == File.from_content(path=PATH, content=CONTENT)
         mock_put.assert_called_once_with(
-            f"http://localhost/projects/123/files/{path}",
-            json={"type": "overwrite", "overwrite": {"content": content}},
+            f"http://localhost/projects/123/files/{PATH}",
+            json={"type": "overwrite", "overwrite": {"content": CONTENT}},
         )
 
 
 def test_update_file_failure(client):
-    project_id = "123"
-    path = "README.md"
     with patch("requests.put") as mock_put:
         mock_put.return_value = Mock(ok=False, text="Error")
         with pytest.raises(HideClientError, match="Error"):
-            client.update_file(
-                project_id, path, FileUpdateType.UDIFF, UdiffUpdate(patch="test-patch")
-            )
+            client.update_file(PROJECT_ID, PATH, UdiffUpdate(patch="test-patch"))
 
 
 def test_delete_file_success(client):
-    project_id = "123"
-    path = "README.md"
     with patch("requests.delete") as mock_delete:
         mock_delete.return_value = Mock(ok=True, status_code=204)
-        assert client.delete_file(project_id, path)
+        assert client.delete_file(PROJECT_ID, PATH)
         mock_delete.assert_called_once_with(
-            f"http://localhost/projects/123/files/{path}"
+            f"http://localhost/projects/123/files/{PATH}"
         )
 
 
 def test_delete_file_failure(client):
-    project_id = "123"
-    path = "README.md"
     with patch("requests.delete") as mock_delete:
         mock_delete.return_value = Mock(ok=False, text="Error")
         with pytest.raises(HideClientError, match="Error"):
-            client.delete_file(project_id, path)
+            client.delete_file(PROJECT_ID, PATH)
 
 
 def test_list_files_success(client):
-    project_id = "123"
     response_data = [{"path": "README.md", "content": "Hello World"}]
     with patch("requests.get") as mock_get:
         mock_get.return_value = Mock(ok=True, json=lambda: response_data)
-        files = client.list_files(project_id)
+        files = client.list_files(PROJECT_ID)
         assert files == [FileInfo(path="README.md")]
 
 
 def test_list_files_failure(client):
-    project_id = "123"
     with patch("requests.get") as mock_get:
         mock_get.return_value = Mock(ok=False, text="Error")
         with pytest.raises(HideClientError, match="Error"):
-            client.list_files(project_id)
+            client.list_files(PROJECT_ID)

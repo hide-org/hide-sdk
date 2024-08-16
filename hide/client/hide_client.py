@@ -86,12 +86,12 @@ class HideClient:
         self,
         project_id: str,
         path: str,
-        show_line_numbers: bool = False,
-        start_line: int = 1,
-        num_lines: int = 1000,
+        start_line: Optional[int] = None,
+        num_lines: Optional[int] = None,
     ) -> File:
         response = requests.get(
-            f"{self.base_url}/projects/{project_id}/files/{path}?showLineNumbers={show_line_numbers}&startLine={start_line}&numLines={num_lines}"
+            url=f"{self.base_url}/projects/{project_id}/files/{path}",
+            params={"startLine": start_line, "numLines": num_lines},
         )
         if not response.ok:
             raise HideClientError(response.text)
@@ -101,24 +101,23 @@ class HideClient:
         self,
         project_id: str,
         path: str,
-        type: FileUpdateType,
         update: Union[UdiffUpdate, LineDiffUpdate, OverwriteUpdate],
     ) -> File:
-        match type:
-            case FileUpdateType.UDIFF:
+        match update:
+            case UdiffUpdate() as udiff:
                 payload = {
-                    "type": type.value,
-                    "udiff": update.model_dump(by_alias=True),
+                    "type": FileUpdateType.UDIFF.value,
+                    "udiff": udiff.model_dump(by_alias=True),
                 }
-            case FileUpdateType.LINEDIFF:
+            case LineDiffUpdate() as linediff:
                 payload = {
-                    "type": type.value,
-                    "linediff": update.model_dump(by_alias=True),
+                    "type": FileUpdateType.LINEDIFF.value,
+                    "linediff": linediff.model_dump(by_alias=True),
                 }
-            case FileUpdateType.OVERWRITE:
+            case OverwriteUpdate() as overwrite:
                 payload = {
-                    "type": type.value,
-                    "overwrite": update.model_dump(by_alias=True),
+                    "type": FileUpdateType.OVERWRITE.value,
+                    "overwrite": overwrite.model_dump(by_alias=True),
                 }
             case _:
                 raise ValueError(f"Invalid file update type: {type}")

@@ -2,7 +2,7 @@ import json
 from typing import Callable, Optional
 
 from hide.client.hide_client import HideClient, Project
-from hide.model import FileUpdateType, LineDiffUpdate, OverwriteUpdate, UdiffUpdate
+from hide.model import FileUpdateType, OverwriteUpdate, UdiffUpdate
 
 
 class Toolkit:
@@ -28,7 +28,7 @@ class Toolkit:
                 result = self.client.run_task(
                     project_id=self.project.id, command=command, alias=alias
                 )
-                return f"exit code: {result.exitCode}\nstdout: {result.stdOut}\nstderr: {result.stdErr}"
+                return f"exit code: {result.exit_code}\nstdout: {result.stdout}\nstderr: {result.stderr}"
             except Exception as e:
                 return f"Failed to run task: {e}"
 
@@ -48,7 +48,6 @@ class Toolkit:
                 file = self.client.update_file(
                     project_id=self.project.id,
                     path=path,
-                    type=FileUpdateType.UDIFF,
                     update=UdiffUpdate(patch=patch),
                 )
                 return f"File updated: {file.path}\n{file}"
@@ -56,62 +55,59 @@ class Toolkit:
                 return f"Failed to apply patch: {e}"
 
         def insert_lines(path: str, start_line: int, content: str) -> str:
-            """Insert lines in a file in the project. Lines are 1-indexed."""
+            """Insert lines in a project file. Lines are 1-indexed."""
             try:
                 file = self.client.get_file(project_id=self.project.id, path=path)
-
-                lines = file.content.splitlines()
-                if start_line > len(lines):
-                    return f"Failed to insert lines: start_line {start_line} is greater than the number of lines in the file."
-
-                lines.insert(start_line - 1, content)
-                content = "\n".join(lines)
-
+                file = file.insert_lines(start_line, content)
                 file = self.client.update_file(
                     project_id=self.project.id,
-                    path=path,
-                    type=FileUpdateType.OVERWRITE,
-                    update=OverwriteUpdate(content=content),
+                    path=file.path,
+                    update=OverwriteUpdate(content=file.content()),
                 )
                 return f"File updated: {file.path}\n{file}"
             except Exception as e:
-                return f"Failed to update lines: {e}"
+                return f"Failed to insert lines: {e}"
 
         def replace_lines(
             path: str, start_line: int, end_line: int, content: str
         ) -> str:
-            """Replace lines in a file in the project. Lines are 1-indexed. end_line is inclusive."""
+            """
+            Replace lines in a project file. Lines are 1-indexed.
+            start_line is inclusive. end_line is exclusive.
+            """
             try:
+                # file = self.client.update_file(
+                #     project_id=self.project.id,
+                #     path=path,
+                #     type=FileUpdateType.LINEDIFF,
+                #     update=LineDiffUpdate(
+                #         start_line=start_line, end_line=end_line, content=content
+                #     ),
+                # )
+                file = self.client.get_file(project_id=self.project.id, path=path)
+                file = file.replace_lines(start_line, end_line, content)
                 file = self.client.update_file(
                     project_id=self.project.id,
-                    path=path,
-                    type=FileUpdateType.LINEDIFF,
-                    update=LineDiffUpdate(
-                        start_line=start_line, end_line=end_line, content=content
-                    ),
+                    path=file.path,
+                    update=OverwriteUpdate(content=file.content()),
                 )
                 return f"File updated: {file.path}\n{file}"
             except Exception as e:
-                return f"Failed to update lines: {e}"
+                return f"Failed to replace lines: {e}"
 
         def append_lines(path: str, content: str) -> str:
             """Append lines to a file in the project."""
             try:
                 file = self.client.get_file(project_id=self.project.id, path=path)
-
-                lines = file.content.splitlines()
-                lines.append(content)
-                content = "\n".join(lines)
-
+                file = file.append_lines(content)
                 file = self.client.update_file(
                     project_id=self.project.id,
-                    path=path,
-                    type=FileUpdateType.OVERWRITE,
-                    update=OverwriteUpdate(content=content),
+                    path=file.path,
+                    update=OverwriteUpdate(content=file.content()),
                 )
                 return f"File updated: {file.path}\n{file}"
             except Exception as e:
-                return f"Failed to update lines: {e}"
+                return f"Failed to append lines: {e}"
 
         def get_file(path: str) -> str:
             """Get a file from the project."""
