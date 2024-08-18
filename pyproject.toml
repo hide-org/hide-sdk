@@ -11,7 +11,7 @@ documentation = "https://hide.sh"
 packages = [{include = "hide"}]
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.10"
 langchain = "^0.1.16"
 langchain-openai = "^0.1.3"
 langchainhub = "^0.1.15"
