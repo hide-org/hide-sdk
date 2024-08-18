@@ -1,7 +1,7 @@
 from enum import Enum, IntEnum
 from typing import List, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from hide.devcontainer.model import DevContainer
 
@@ -54,52 +54,122 @@ class Diagnostic(BaseModel):
     range: Range
     severity: Optional[DiagnosticSeverity] = None
     code: Optional[Union[int, str]] = None
-    code_description: Optional[CodeDescription] = Field(None, alias="codeDescription")
+    code_description: Optional[CodeDescription] = Field(
+        default=None, serialization_alias="codeDescription"
+    )
     source: Optional[str] = None
     message: str
     tags: Optional[List[DiagnosticTag]] = None
     related_information: Optional[List[DiagnosticRelatedInformation]] = Field(
-        None, alias="relatedInformation"
+        default=None, serialization_alias="relatedInformation"
     )
     data: Optional[Union[dict, list]] = None
 
 
+class Line(BaseModel):
+    number: int = Field(..., description="The line number.")
+    content: str = Field(..., description="The content of the line.")
+
+
 class File(BaseModel):
     path: str = Field(..., description="The path of the file.")
-    content: str = Field(..., description="The content of the file.")
+    lines: list[Line] = Field(default_factory=list)
     diagnostics: List[Diagnostic] = Field(default_factory=list)
 
-    def __str__(self) -> str:
-        lines = self.content.split("\n")
-        output = []
+    @classmethod
+    def from_content(cls, path: str, content: str) -> "File":
+        return cls(
+            path=path,
+            lines=[
+                Line(number=idx + 1, content=line)
+                for idx, line in enumerate(content.splitlines())
+            ],
+        )
 
-        for i, line in enumerate(lines):
-            output.append(f"{i + 1:4d} | {line}")
+    def content(self) -> str:
+        return "\n".join([line.content for line in self.lines]) + "\n"
+
+    def insert_lines(self, start_line: int, content: str) -> "File":
+        new_lines = content.splitlines()
+
+        for idx, line in enumerate(new_lines):
+            line_num = start_line + idx
+            line_idx = line_num - 1
+            self.lines.insert(line_idx, Line(number=line_num, content=line))
+
+        for line in self.lines[start_line + len(new_lines) - 1 :]:
+            line.number += len(new_lines)
+
+        return self
+
+    def replace_lines(self, start_line: int, end_line: int, content: str) -> "File":
+        assert start_line < end_line, "start_line must be less than end_line"
+
+        result = []
+        new_lines = content.splitlines()
+
+        result.extend(self.lines[: start_line - 1])
+
+        for idx, line in enumerate(new_lines):
+            line_num = start_line + idx
+            result.append(Line(number=line_num, content=line))
+
+        result.extend(self.lines[end_line - 1 :])
+
+        for line in result[start_line + len(new_lines) - 1 :]:
+            line.number += len(new_lines) - (end_line - start_line)
+
+        self.lines = result
+        return self
+
+    def append_lines(self, content: str) -> "File":
+        new_lines = content.splitlines()
+        last_line = self.lines[-1] if self.lines else Line(number=0, content="")
+
+        for idx, line in enumerate(new_lines):
+            line_num = last_line.number + idx + 1
+            line_idx = line_num - 1
+            self.lines.insert(line_idx, Line(number=line_num, content=line))
+
+        return self
+
+    def __str__(self) -> str:
+        output = []
+        line_number_width = len(str(self.lines[-1].number))
+
+        for line in self.lines:
+            output.append(f"{line.number:>{line_number_width}} | {line.content}")
 
             for diagnostic in self.diagnostics:
-                if diagnostic.range.start.line <= i <= diagnostic.range.end.line:
+                line_index = line.number - 1
+                if (
+                    diagnostic.range.start.line
+                    <= line_index
+                    <= diagnostic.range.end.line
+                ):
                     # Add carets
                     start = (
                         diagnostic.range.start.character
-                        if i == diagnostic.range.start.line
+                        if line_index == diagnostic.range.start.line
                         else 0
                     )
                     end = (
                         diagnostic.range.end.character
-                        if i == diagnostic.range.end.line
-                        else len(line)
+                        if line_index == diagnostic.range.end.line
+                        else len(line.content)
                     )
-                    caret_line = " " * (start + 6) + "^" * (end - start)
-                    output.append(caret_line)
 
                     # Add diagnostic message
-                    severity = (
-                        diagnostic.severity.name
-                        if diagnostic.severity
-                        else "DIAGNOSTIC"
-                    )
-                    output.append(f"{severity}: {diagnostic.message}")
+                    offset = " " * (start + line_number_width + 3)
+                    caret_line = offset + "^" * (end - start)
+
+                    severity = diagnostic.severity.name if diagnostic.severity else ""
+                    output.append(f"{caret_line} {severity}: {diagnostic.message}")
                     output.append("")  # Add an empty line for readability
+
+        # Add new line at the end if it's missing
+        if output[-1] != "":
+            output.append("")
 
         return "\n".join(output)
 
@@ -119,9 +189,13 @@ class Project(BaseModel):
 
 
 class TaskResult(BaseModel):
-    stdOut: str = Field(..., description="The standard output of the command.")
-    stdErr: str = Field(..., description="The standard error of the command.")
-    exitCode: int = Field(..., description="The exit code of the command.")
+    model_config = ConfigDict(populate_by_name=True)
+
+    stdout: str = Field(..., description="The standard output of the command.")
+    stderr: str = Field(..., description="The standard error of the command.")
+    exit_code: int = Field(
+        ..., description="The exit code of the command.", alias="exitCode"
+    )
 
 
 class Task(BaseModel):
