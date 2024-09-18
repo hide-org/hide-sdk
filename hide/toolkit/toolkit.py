@@ -1,8 +1,8 @@
 import json
 from typing import Callable, Optional
 
-from hide.client.hide_client import HideClient, Project
-from hide.model import OverwriteUpdate, UdiffUpdate
+from hide.client.hide_client import HideClient
+from hide.model import OverwriteUpdate, Project, UdiffUpdate
 
 
 class Toolkit:
@@ -39,7 +39,7 @@ class Toolkit:
             file = self.client.create_file(
                 project_id=self.project.id, path=path, content=content
             )
-            return f"File created: {file.path}\n{file}"
+            return f"File created:\n{file}"
         except Exception as e:
             return f"Failed to create file: {e}"
 
@@ -51,7 +51,7 @@ class Toolkit:
                 path=path,
                 update=UdiffUpdate(patch=patch),
             )
-            return f"File updated: {file.path}\n{file}"
+            return f"File updated:\n{file}"
         except Exception as e:
             return f"Failed to apply patch: {e}"
 
@@ -65,7 +65,7 @@ class Toolkit:
                 path=file.path,
                 update=OverwriteUpdate(content=file.content()),
             )
-            return f"File updated: {file.path}\n{file}"
+            return f"File updated:\n{file}"
         except Exception as e:
             return f"Failed to insert lines: {e}"
 
@@ -84,7 +84,7 @@ class Toolkit:
                 path=file.path,
                 update=OverwriteUpdate(content=file.content()),
             )
-            return f"File updated: {file.path}\n{file}"
+            return f"File updated:\n{file}"
         except Exception as e:
             return f"Failed to replace lines: {e}"
 
@@ -98,7 +98,7 @@ class Toolkit:
                 path=file.path,
                 update=OverwriteUpdate(content=file.content()),
             )
-            return f"File updated: {file.path}\n{file}"
+            return f"File updated:\n{file}"
         except Exception as e:
             return f"Failed to append lines: {e}"
 
@@ -106,7 +106,7 @@ class Toolkit:
         """Get a file from the project."""
         try:
             file = self.client.get_file(project_id=self.project.id, path=path)
-            return f"```{file.path}\n{file}```"
+            return f"{file}"
         except Exception as e:
             return f"Failed to get file: {e}"
 

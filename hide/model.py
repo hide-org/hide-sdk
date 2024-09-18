@@ -1,9 +1,17 @@
 from enum import Enum, IntEnum
 from typing import List, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 from hide.devcontainer.model import DevContainer
+
+UpperLeftCorner = "\u250C"
+UpperRightCorner = "\u2510"
+LowerLeftCorner = "\u2514"
+LowerRightCorner = "\u2518"
+VerticalLine = "\u2502"
+HorizontalLine = "\u2500"
+HorizontalEllipsis = "\u2026"
 
 
 class Repository(BaseModel):
@@ -37,8 +45,16 @@ class Range(BaseModel):
 
 
 class Location(BaseModel):
-    uri: str
+    path: str = Field(validation_alias=AliasChoices("path", "uri"))
     range: Range
+
+    def __str__(self) -> str:
+        lines = (
+            f"{self.range.start.line}"
+            if self.range.start.line == self.range.end.line
+            else f"{self.range.start.line}:{self.range.end.line}"
+        )
+        return f"{self.path}:{lines}"
 
 
 class DiagnosticRelatedInformation(BaseModel):
@@ -136,9 +152,19 @@ class File(BaseModel):
     def __str__(self) -> str:
         output = []
         line_number_width = len(str(self.lines[-1].number))
+        prev_line = 0
+
+        output.append(f"{' ' * line_number_width} {UpperLeftCorner} {self.path}")
 
         for line in self.lines:
-            output.append(f"{line.number:>{line_number_width}} | {line.content}")
+            if line.number != prev_line + 1:
+                output.append(
+                    f"{' ' * (line_number_width - 1)}{HorizontalEllipsis} {VerticalLine} {HorizontalEllipsis}"
+                )
+
+            output.append(
+                f"{line.number:>{line_number_width}} {VerticalLine} {line.content}"
+            )
 
             for diagnostic in self.diagnostics:
                 line_index = line.number - 1
@@ -167,9 +193,9 @@ class File(BaseModel):
                     output.append(f"{caret_line} {severity}: {diagnostic.message}")
                     output.append("")  # Add an empty line for readability
 
-        # Add new line at the end if it's missing
-        if output[-1] != "":
-            output.append("")
+            prev_line = line.number
+
+        output.append(f"{' ' * line_number_width} {LowerLeftCorner}")
 
         return "\n".join(output)
 
@@ -233,3 +259,18 @@ class LineDiffUpdate(BaseModel):
 
 class OverwriteUpdate(BaseModel):
     content: str = Field(..., description="The new content of the file.")
+
+
+class Symbol(BaseModel):
+    name: str
+    kind: str
+    location: Location
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.kind.lower()}) at {self.location}"
+
+
+class SearchMode(IntEnum):
+    DEFAULT = 0
+    EXACT = 1
+    REGEX = 2
