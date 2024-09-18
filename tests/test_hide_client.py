@@ -282,7 +282,7 @@ def test_list_files_failure(client):
             client.list_files(PROJECT_ID)
 
 
-def test_search_files_basic(client):
+def test_search_files_default(client):
     response_data = [
         {"path": "src/main.py", "lines": [{"number": 1, "content": "Hello"}]}
     ]
@@ -296,7 +296,7 @@ def test_search_files_basic(client):
         )
 
 
-def test_search_files_with_all_params(client):
+def test_search_files_exact(client):
     response_data = [
         {
             "path": "src/util.py",
@@ -308,11 +308,7 @@ def test_search_files_with_all_params(client):
         files = client.search_files(
             PROJECT_ID,
             query="hello",
-            exact=True,
-            regex=True,
-            show_hidden=True,
-            include=["src/**/*.py"],
-            exclude=["test_*.py"],
+            search_mode=model.SearchMode.EXACT,
         )
         assert files == [
             model.File.from_content(path="src/util.py", content="def hello(): pass")
@@ -323,10 +319,114 @@ def test_search_files_with_all_params(client):
                 "query": "hello",
                 "type": "content",
                 "exact": "",
+            },
+        )
+
+
+def test_search_files_regex(client):
+    response_data = [
+        {
+            "path": "src/util.py",
+            "lines": [{"number": 1, "content": "def hello(): pass"}],
+        }
+    ]
+    with patch("requests.get") as mock_get:
+        mock_get.return_value = Mock(ok=True, json=lambda: response_data)
+        files = client.search_files(
+            PROJECT_ID,
+            query="hello",
+            search_mode=model.SearchMode.REGEX,
+        )
+        assert files == [
+            model.File.from_content(path="src/util.py", content="def hello(): pass")
+        ]
+        mock_get.assert_called_once_with(
+            f"http://localhost/projects/{PROJECT_ID}/search",
+            params={
+                "query": "hello",
+                "type": "content",
                 "regex": "",
+            },
+        )
+
+
+def test_search_files_hidden(client):
+    response_data = [
+        {
+            "path": "src/util.py",
+            "lines": [{"number": 1, "content": "def hello(): pass"}],
+        }
+    ]
+    with patch("requests.get") as mock_get:
+        mock_get.return_value = Mock(ok=True, json=lambda: response_data)
+        files = client.search_files(
+            PROJECT_ID,
+            query="hello",
+            show_hidden=True,
+        )
+        assert files == [
+            model.File.from_content(path="src/util.py", content="def hello(): pass")
+        ]
+        mock_get.assert_called_once_with(
+            f"http://localhost/projects/{PROJECT_ID}/search",
+            params={
+                "query": "hello",
+                "type": "content",
                 "showHidden": "",
+            },
+        )
+
+
+def test_search_files_with_include(client):
+    response_data = [
+        {
+            "path": "src/util.py",
+            "lines": [{"number": 1, "content": "def hello(): pass"}],
+        }
+    ]
+    with patch("requests.get") as mock_get:
+        mock_get.return_value = Mock(ok=True, json=lambda: response_data)
+        files = client.search_files(
+            PROJECT_ID,
+            query="hello",
+            include=["src/**/*.py"],
+        )
+        assert files == [
+            model.File.from_content(path="src/util.py", content="def hello(): pass")
+        ]
+        mock_get.assert_called_once_with(
+            f"http://localhost/projects/{PROJECT_ID}/search",
+            params={
+                "query": "hello",
+                "type": "content",
                 "include": ["src/**/*.py"],
-                "exclude": ["test_*.py"],
+            },
+        )
+
+
+def test_search_files_with_exclude(client):
+    response_data = [
+        {
+            "path": "src/util.py",
+            "lines": [{"number": 1, "content": "def hello(): pass"}],
+        }
+    ]
+    with patch("requests.get") as mock_get:
+        mock_get.return_value = Mock(ok=True, json=lambda: response_data)
+        files = client.search_files(
+            PROJECT_ID,
+            query="hello",
+            exclude=["src/**/*.py"],
+        )
+        assert files == [
+            model.File.from_content(path="src/util.py", content="def hello(): pass")
+        ]
+        mock_get.assert_called_once_with(
+            f"http://localhost/projects/{PROJECT_ID}/search",
+            params={
+                "query": "hello",
+                "type": "content",
+                "exclude": ["src/**/*.py"],
             },
         )
 

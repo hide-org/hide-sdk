@@ -268,3 +268,9 @@ class Symbol(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.name} ({self.kind.lower()}) at {self.location}"
+
+
+class SearchMode(IntEnum):
+    DEFAULT = 0
+    EXACT = 1
+    REGEX = 2

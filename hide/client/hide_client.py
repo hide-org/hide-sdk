@@ -151,17 +151,16 @@ class HideClient:
         self,
         project_id: str,
         query: str,
-        exact: bool = False,
-        regex: bool = False,
+        search_mode: model.SearchMode = model.SearchMode.DEFAULT,
         show_hidden: bool = False,
         include: Optional[list[str]] = None,
         exclude: Optional[list[str]] = None,
     ) -> list[model.File]:
         params: dict[str, Any] = {"query": query, "type": "content"}
 
-        if exact:
+        if search_mode == model.SearchMode.EXACT:
             params["exact"] = ""
-        if regex:
+        if search_mode == model.SearchMode.REGEX:
             params["regex"] = ""
         if show_hidden:
             params["showHidden"] = ""
