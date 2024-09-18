@@ -3,17 +3,18 @@
 Hide is a headless Integrated Development Environment (IDE) designed for coding agents. It provides a robust toolkit for managing projects, running tasks, and handling files within a project.
 
 ## Table of Contents
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Testing](#testing)
-- [Contributing](#contributing)
-- [License](#license)
+
+-   [Requirements](#requirements)
+-   [Installation](#installation)
+-   [Usage](#usage)
+-   [Testing](#testing)
+-   [Contributing](#contributing)
+-   [License](#license)
 
 ## Requirements
 
-- Python 3.10+
-- Hide Runtime: https://github.com/artmoskvin/hide
+-   Python 3.10+
+-   Hide Runtime: https://github.com/hide-org/hide
 
 ## Installation
 
@@ -24,8 +25,9 @@ Hide is a headless Integrated Development Environment (IDE) designed for coding 
 To install Hide from sources, you need [Poetry](https://python-poetry.org/).
 
 1. Clone the repository:
+
     ```sh
-    git clone https://github.com/artmoskvin/hide-python.git
+    git clone git@github.com:hide-org/hide-sdk.git
     cd hide-python
     ```
 
