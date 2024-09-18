@@ -28,7 +28,7 @@ To install Hide from sources, you need [Poetry](https://python-poetry.org/).
 
     ```sh
     git clone git@github.com:hide-org/hide-sdk.git
-    cd hide-python
+    cd hide-sdk
     ```
 
 2. Install the dependencies and Hide in editable mode:
