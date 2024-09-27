@@ -120,9 +120,17 @@ class HideClient:
             raise HideClientError(response.text)
         return model.File.model_validate(response.json())
 
-    def delete_file(self, project_id: str, path: str) -> bool:
+    def delete_file(
+        self, project_id: str, file: str | model.File | model.FileInfo
+    ) -> bool:
+        if isinstance(file, model.FileInfo):
+            file = file.path
+
+        if isinstance(file, model.File):
+            file = file.path
+
         response = requests.delete(
-            f"{self.base_url}/projects/{project_id}/files/{path}"
+            f"{self.base_url}/projects/{project_id}/files/{file}"
         )
         if not response.ok:
             raise HideClientError(response.text)

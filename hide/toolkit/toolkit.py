@@ -113,7 +113,7 @@ class Toolkit:
     def delete_file(self, path: str) -> str:
         """Delete a file from the project."""
         try:
-            deleted = self.client.delete_file(project_id=self.project.id, path=path)
+            deleted = self.client.delete_file(project_id=self.project.id, file=path)
             return (
                 f"File deleted: {path}" if deleted else f"Failed to delete file: {path}"
             )
