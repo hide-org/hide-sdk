@@ -121,7 +121,7 @@ class HideClient:
         return model.File.model_validate(response.json())
 
     def delete_file(
-        self, project_id: str, file: str | model.File | model.FileInfo
+        self, project_id: str, file: model.FilePath | model.File | model.FileInfo
     ) -> bool:
         if isinstance(file, model.FileInfo):
             file = file.path
