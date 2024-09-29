@@ -219,6 +219,24 @@ def test_delete_file_success(client):
         )
 
 
+def test_delete_file_with_file(client):
+    with patch("requests.delete") as mock_delete:
+        mock_delete.return_value = Mock(ok=True, status_code=204)
+        assert client.delete_file(PROJECT_ID, model.File(path=PATH))
+        mock_delete.assert_called_once_with(
+            f"http://localhost/projects/123/files/{PATH}"
+        )
+
+
+def test_delete_file_with_file_info(client):
+    with patch("requests.delete") as mock_delete:
+        mock_delete.return_value = Mock(ok=True, status_code=204)
+        assert client.delete_file(PROJECT_ID, model.FileInfo(path=PATH))
+        mock_delete.assert_called_once_with(
+            f"http://localhost/projects/123/files/{PATH}"
+        )
+
+
 def test_delete_file_failure(client):
     with patch("requests.delete") as mock_delete:
         mock_delete.return_value = Mock(ok=False, text="Error")

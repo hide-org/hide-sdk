@@ -13,6 +13,7 @@ VerticalLine = "\u2502"
 HorizontalLine = "\u2500"
 HorizontalEllipsis = "\u2026"
 
+FilePath = str
 
 class Repository(BaseModel):
     url: str = Field(..., description="The URL of the repository.")
@@ -88,7 +89,7 @@ class Line(BaseModel):
 
 
 class File(BaseModel):
-    path: str = Field(..., description="The path of the file.")
+    path: FilePath = Field(..., description="The path of the file.")
     lines: list[Line] = Field(default_factory=list)
     diagnostics: List[Diagnostic] = Field(default_factory=list)
 
@@ -230,7 +231,7 @@ class Task(BaseModel):
 
 
 class FileInfo(BaseModel):
-    path: str = Field(..., description="The path of the file.")
+    path: FilePath = Field(..., description="The path of the file.")
 
 
 class FileUpdateType(str, Enum):

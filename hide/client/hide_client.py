@@ -63,7 +63,9 @@ class HideClient:
             raise HideClientError(response.text)
         return model.TaskResult.model_validate(response.json())
 
-    def create_file(self, project_id: str, path: str, content: str) -> model.File:
+    def create_file(
+        self, project_id: str, path: model.FilePath, content: str
+    ) -> model.File:
         response = requests.post(
             f"{self.base_url}/projects/{project_id}/files",
             json={"path": path, "content": content},
@@ -75,7 +77,7 @@ class HideClient:
     def get_file(
         self,
         project_id: str,
-        path: str,
+        path: model.FilePath,
         start_line: Optional[int] = None,
         num_lines: Optional[int] = None,
     ) -> model.File:
@@ -90,7 +92,7 @@ class HideClient:
     def update_file(
         self,
         project_id: str,
-        path: str,
+        path: model.FilePath,
         update: Union[model.UdiffUpdate, model.LineDiffUpdate, model.OverwriteUpdate],
     ) -> model.File:
         match update:
@@ -120,9 +122,17 @@ class HideClient:
             raise HideClientError(response.text)
         return model.File.model_validate(response.json())
 
-    def delete_file(self, project_id: str, path: str) -> bool:
+    def delete_file(
+        self, project_id: str, file: model.FilePath | model.File | model.FileInfo
+    ) -> bool:
+        if isinstance(file, model.FileInfo):
+            file = file.path
+
+        if isinstance(file, model.File):
+            file = file.path
+
         response = requests.delete(
-            f"{self.base_url}/projects/{project_id}/files/{path}"
+            f"{self.base_url}/projects/{project_id}/files/{file}"
         )
         if not response.ok:
             raise HideClientError(response.text)
