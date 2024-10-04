@@ -13,10 +13,13 @@ class HideClient:
         self.base_url = base_url
 
     def create_project(
-        self, repository: model.Repository, devcontainer: Optional[DevContainer] = None
+        self,
+        repository: model.Repository,
+        devcontainer: Optional[DevContainer] = None,
+        languages: Optional[list[model.Language]] = None,
     ) -> model.Project:
         request = model.CreateProjectRequest(
-            repository=repository, devcontainer=devcontainer
+            repository=repository, devcontainer=devcontainer, languages=languages
         )
         response = requests.post(
             f"{self.base_url}/projects",
