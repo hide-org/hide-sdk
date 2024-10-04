@@ -15,6 +15,7 @@ HorizontalEllipsis = "\u2026"
 
 FilePath = str
 
+
 class Repository(BaseModel):
     url: str = Field(..., description="The URL of the repository.")
     commit: Optional[str] = Field(
@@ -201,6 +202,13 @@ class File(BaseModel):
         return "\n".join(output)
 
 
+class Language(str, Enum):
+    GO = "Go"
+    JAVASCRIPT = "JavaScript"
+    PYTHON = "Python"
+    TYPESCRIPT = "TypeScript"
+
+
 class CreateProjectRequest(BaseModel):
     repository: Repository = Field(
         ..., description="The repository to create the project from."
@@ -208,6 +216,10 @@ class CreateProjectRequest(BaseModel):
     devcontainer: Optional[DevContainer] = Field(
         default=None,
         description="The dev container configuration to use for the project. If not provided, the configuration from the repository will be used. If the repository does not contain a dev container, the request will fail.",
+    )
+    languages: Optional[list[Language]] = Field(
+        default=None,
+        description="The languages to use for the project. If not provided, the languages will be inferred from the repository.",
     )
 
 

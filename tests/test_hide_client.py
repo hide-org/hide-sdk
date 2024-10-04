@@ -5,6 +5,7 @@ import pytest
 import hide
 from hide import model
 from hide.client import HideClientError
+from hide.devcontainer.model import ImageDevContainer
 
 PROJECT_ID = "123"
 PATH = "file.txt"
@@ -25,6 +26,46 @@ def test_create_project_success(client: hide.Client):
     with patch("requests.post") as mock_post:
         mock_post.return_value = Mock(ok=True, json=lambda: response_data)
         project = client.create_project(repository=repository)
+        assert project == model.Project(id="123")
+        mock_post.assert_called_once_with(
+            "http://localhost/projects",
+            json=request_data.model_dump(exclude_unset=True),
+        )
+
+
+def test_create_project_with_devcontainer(client: hide.Client):
+    repository = model.Repository(url="http://example.com/repo.git")
+    devcontainer = ImageDevContainer(
+        image="mcr.microsoft.com/devcontainers/python:3.12"
+    )
+    request_data = model.CreateProjectRequest(
+        repository=repository, devcontainer=devcontainer
+    )
+    response_data = {"id": "123"}
+
+    with patch("requests.post") as mock_post:
+        mock_post.return_value = Mock(ok=True, json=lambda: response_data)
+        project = client.create_project(
+            repository=repository, devcontainer=devcontainer
+        )
+        assert project == model.Project(id="123")
+        mock_post.assert_called_once_with(
+            "http://localhost/projects",
+            json=request_data.model_dump(exclude_unset=True),
+        )
+
+
+def test_create_project_with_languages(client: hide.Client):
+    repository = model.Repository(url="http://example.com/repo.git")
+    languages = [l for l in model.Language]
+    request_data = model.CreateProjectRequest(
+        repository=repository, languages=languages
+    )
+    response_data = {"id": "123"}
+
+    with patch("requests.post") as mock_post:
+        mock_post.return_value = Mock(ok=True, json=lambda: response_data)
+        project = client.create_project(repository=repository, languages=languages)
         assert project == model.Project(id="123")
         mock_post.assert_called_once_with(
             "http://localhost/projects",
