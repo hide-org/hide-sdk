@@ -146,7 +146,15 @@ class HideClient:
         project_id: str,
         include: Optional[list[str]] = None,
         exclude: Optional[list[str]] = None,
-    ) -> list[model.FileInfo]:
+        format: model.ListFilesFormat = model.ListFilesFormat.JSON,
+    ) -> list[model.FileInfo] | str:
+        headers: dict[str, Any] = {}
+        match format:
+            case model.ListFilesFormat.JSON:
+                headers["Accept"] = "application/json"
+            case model.ListFilesFormat.TREE:
+                headers["Accept"] = "text/plain"
+
         params: dict[str, Any] = {}
         if include:
             params["include"] = include
@@ -154,11 +162,18 @@ class HideClient:
             params["exclude"] = exclude
 
         response = requests.get(
-            url=f"{self.base_url}/projects/{project_id}/files", params=params
+            url=f"{self.base_url}/projects/{project_id}/files",
+            params=params,
+            headers=headers,
         )
         if not response.ok:
             raise HideClientError(response.text)
-        return [model.FileInfo.model_validate(file) for file in response.json()]
+
+        match format:
+            case model.ListFilesFormat.JSON:
+                return [model.FileInfo.model_validate(file) for file in response.json()]
+            case model.ListFilesFormat.TREE:
+                return response.content.decode("utf-8")
 
     def search_files(
         self,

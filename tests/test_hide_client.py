@@ -285,14 +285,29 @@ def test_delete_file_failure(client):
             client.delete_file(PROJECT_ID, PATH)
 
 
-def test_list_files_success(client):
+def test_list_files_json(client):
     response_data = [{"path": "README.md", "content": "Hello World"}]
     with patch("requests.get") as mock_get:
         mock_get.return_value = Mock(ok=True, json=lambda: response_data)
-        files = client.list_files(PROJECT_ID)
+        files = client.list_files(PROJECT_ID, format=model.ListFilesFormat.JSON)
         assert files == [model.FileInfo(path="README.md")]
         mock_get.assert_called_once_with(
-            url="http://localhost/projects/123/files", params={}
+            url="http://localhost/projects/123/files",
+            params={},
+            headers={"Accept": "application/json"},
+        )
+
+
+def test_list_files_tree(client):
+    response_data = ".\n├── file1.txt\n└── file2.txt\n"
+    with patch("requests.get") as mock_get:
+        mock_get.return_value = Mock(ok=True, content=response_data.encode())
+        files = client.list_files(PROJECT_ID, format=model.ListFilesFormat.TREE)
+        assert files == response_data
+        mock_get.assert_called_once_with(
+            url="http://localhost/projects/123/files",
+            params={},
+            headers={"Accept": "text/plain"},
         )
 
 
@@ -305,6 +320,7 @@ def test_list_files_with_include_param(client):
         mock_get.assert_called_once_with(
             url="http://localhost/projects/123/files",
             params={"include": ["src/**/*.py"]},
+            headers={"Accept": "application/json"},
         )
 
 
@@ -317,6 +333,7 @@ def test_list_files_with_exclude_param(client):
         mock_get.assert_called_once_with(
             url="http://localhost/projects/123/files",
             params={"exclude": ["*.py", "*.js"]},
+            headers={"Accept": "application/json"},
         )
 
 
@@ -331,6 +348,7 @@ def test_list_files_with_include_and_exclude_params(client):
         mock_get.assert_called_once_with(
             url="http://localhost/projects/123/files",
             params={"include": ["src/**/*.py"], "exclude": ["src/test_*.py"]},
+            headers={"Accept": "application/json"},
         )
 
 
