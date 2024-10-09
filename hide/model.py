@@ -287,3 +287,8 @@ class SearchMode(IntEnum):
     DEFAULT = 0
     EXACT = 1
     REGEX = 2
+
+
+class ListFilesFormat(str, Enum):
+    JSON = "json"
+    TREE = "tree"
