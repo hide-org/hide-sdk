@@ -43,6 +43,7 @@ class HideClient:
         project_id: str,
         command: Optional[str] = None,
         alias: Optional[str] = None,
+        timeout_seconds: int = None,
     ) -> model.TaskResult:
         if not command and not alias:
             raise HideClientError("Either 'command' or 'alias' must be provided")
@@ -57,7 +58,9 @@ class HideClient:
             payload["alias"] = alias
 
         response = requests.post(
-            f"{self.base_url}/projects/{project_id}/tasks", json=payload
+            f"{self.base_url}/projects/{project_id}/tasks",
+            json=payload,
+            headers={"X-Timeout-Seconds": str(timeout_seconds)},
         )
         if not response.ok:
             raise HideClientError(response.text)
