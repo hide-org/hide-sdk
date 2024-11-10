@@ -19,10 +19,13 @@ class Toolkit:
             return f"Failed to get tasks: {e}"
 
     def run_task(
-        self, command: Optional[str] = None, alias: Optional[str] = None
+        self,
+        command: Optional[str] = None,
+        alias: Optional[str] = None,
+        timeout: Optional[int] = None,
     ) -> str:
         """
-        Run a task in the project. Provide either command or alias. Command will be executed in the shell.
+        Run a task in the project. Provide either command or alias. Set timeout in seconds. Command will be executed in the shell.
         For the list of available tasks and their aliases, use the `get_tasks` tool.
         """
         try:
