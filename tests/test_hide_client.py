@@ -106,7 +106,9 @@ def test_run_task_command_success(client):
         result = client.run_task(PROJECT_ID, command="echo Hello")
         assert result == model.TaskResult(stdout="output", stderr="", exit_code=0)
         mock_post.assert_called_once_with(
-            "http://localhost/projects/123/tasks", json={"command": "echo Hello"}
+            "http://localhost/projects/123/tasks",
+            json={"command": "echo Hello"},
+            headers=None,
         )
 
 
@@ -117,7 +119,9 @@ def test_run_task_alias_success(client):
         result = client.run_task(PROJECT_ID, alias="build")
         assert result == model.TaskResult(stdout="output", stderr="", exit_code=0)
         mock_post.assert_called_once_with(
-            "http://localhost/projects/123/tasks", json={"alias": "build"}
+            "http://localhost/projects/123/tasks",
+            json={"alias": "build"},
+            headers=None,
         )
 
 

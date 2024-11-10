@@ -60,10 +60,14 @@ class HideClient:
         if alias:
             payload["alias"] = alias
 
+        headers = None
+        if timeout_seconds:
+            headers = headers = {"X-Timeout-Seconds": str(timeout_seconds)}
+
         response = requests.post(
             f"{self.base_url}/projects/{project_id}/tasks",
             json=payload,
-            headers={"X-Timeout-Seconds": str(timeout_seconds)},
+            headers=headers,
         )
         if not response.ok:
             raise HideClientError(response.text)
