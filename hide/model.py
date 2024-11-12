@@ -292,3 +292,20 @@ class SearchMode(IntEnum):
 class ListFilesFormat(str, Enum):
     JSON = "json"
     TREE = "tree"
+
+
+class DocumentSymbol(BaseModel):
+    name: str = Field(..., description="The name of the symbol.")
+    detail: str = Field(..., description="The details of the symbol.")
+    kind: str = Field(..., description="The kind of the symbol.")
+    range: Range = Field(..., description="The range of the symbol.")
+    children: list["DocumentSymbol"] = Field(
+        default_factory=list, description="The children of the symbol."
+    )
+
+
+class DocumentOutline(BaseModel):
+    path: FilePath = Field(..., description="The path of the file.")
+    document_symbols: list[DocumentSymbol] = Field(
+        ..., description="The document symbols."
+    )
