@@ -234,6 +234,22 @@ class HideClient:
             raise HideClientError(response.text)
         return [model.Symbol.model_validate(symbol) for symbol in response.json()]
 
+    def document_outline(
+        self, project_id: str, file: model.File | model.FileInfo | model.FilePath
+    ) -> model.DocumentOutline:
+        match file:
+            case model.FilePath():
+                path = file
+            case model.File():
+                path = file.path
+            case model.FileInfo():
+                path = file.path
+
+        response = requests.get(f"{self.base_url}/projects/{project_id}/outline/{path}")
+        if not response.ok:
+            raise HideClientError(response.text)
+        return model.DocumentOutline.model_validate(response.json())
+
 
 class HideClientError(Exception):
     def __init__(self, message: str) -> None:

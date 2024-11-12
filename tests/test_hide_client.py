@@ -517,3 +517,46 @@ def test_search_files_failure(client):
         mock_get.return_value = Mock(ok=False, text="Error")
         with pytest.raises(HideClientError, match="Error"):
             client.search_files(PROJECT_ID, query="test")
+
+
+def test_document_outline_success(client):
+    response_data = {
+        "path": "file.txt",
+        "document_symbols": [
+            {
+                "name": "Symbol 1",
+                "detail": "Details 1",
+                "kind": "Kind 1",
+                "range": {
+                    "start": {"line": 1, "character": 1},
+                    "end": {"line": 1, "character": 2},
+                },
+                "children": [
+                    {
+                        "name": "Child 1",
+                        "detail": "Child details 1",
+                        "kind": "Child kind 1",
+                        "range": {
+                            "start": {"line": 2, "character": 1},
+                            "end": {"line": 2, "character": 2},
+                        },
+                        "children": [],
+                    }
+                ],
+            }
+        ],
+    }
+    with patch("requests.get") as mock_get:
+        mock_get.return_value = Mock(ok=True, json=lambda: response_data)
+        outline = client.document_outline(PROJECT_ID, PATH)
+        assert outline == model.DocumentOutline.model_validate(response_data)
+        mock_get.assert_called_once_with(
+            f"http://localhost/projects/{PROJECT_ID}/outline/{PATH}"
+        )
+
+
+def test_document_outline_failure(client):
+    with patch("requests.get") as mock_get:
+        mock_get.return_value = Mock(ok=False, text="Error")
+        with pytest.raises(HideClientError, match="Error"):
+            client.document_outline(PROJECT_ID, PATH)
