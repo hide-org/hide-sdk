@@ -146,6 +146,11 @@ def test_run_task_command_and_alias(client):
         client.run_task(PROJECT_ID, command="echo Hello", alias="build")
 
 
+def test_run_task_negative_timeout(client):
+    with pytest.raises(HideClientError, match="Timeout must be a positive integer"):
+        client.run_task(PROJECT_ID, command="echo Hello", timeout=-1)
+
+
 def test_create_file_success(client):
     with patch("requests.post") as mock_post:
         mock_post.return_value = Mock(ok=True, json=lambda: FILE)

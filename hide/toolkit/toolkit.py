@@ -30,7 +30,7 @@ class Toolkit:
         """
         try:
             result = self.client.run_task(
-                project_id=self.project.id, command=command, alias=alias
+                project_id=self.project.id, command=command, alias=alias, timeout=timeout
             )
             return f"exit code: {result.exit_code}\nstdout: {result.stdout}\nstderr: {result.stderr}"
         except Exception as e:
