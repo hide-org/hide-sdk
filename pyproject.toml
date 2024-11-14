@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hide-py"
-version = "0.5.1"
+version = "0.5.2"
 description = "Hide: Headless IDE for coding agents"
 license = "MIT"
 authors = ["Art Moskvin <amoskvin@me.com>"]
