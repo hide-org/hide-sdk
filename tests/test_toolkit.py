@@ -3,7 +3,7 @@ from unittest.mock import create_autospec
 import pytest
 
 from hide import Client
-from hide.model import File, FileInfo, Line, Project, Task, TaskResult
+from hide.model import File, FileInfo, Line, Project, Repository, Task, TaskResult
 from hide.toolkit.toolkit import Toolkit
 
 PROJECT_ID = "123"
@@ -19,7 +19,8 @@ def hide_client():
 
 @pytest.fixture
 def toolkit(hide_client: Client) -> Toolkit:
-    project = Project(id=PROJECT_ID)
+    repository = Repository(url="http://example.com/repo.git")
+    project = Project(id=PROJECT_ID, repository=repository)
     return Toolkit(project=project, client=hide_client)
 
 
