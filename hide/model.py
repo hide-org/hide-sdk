@@ -225,6 +225,7 @@ class CreateProjectRequest(BaseModel):
 
 class Project(BaseModel):
     id: str = Field(..., description="The ID of the project.")
+    repository: Repository = Field(..., description="The repository of the project.")
 
 
 class TaskResult(BaseModel):
