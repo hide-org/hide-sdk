@@ -12,6 +12,18 @@ class HideClient:
     def __init__(self, base_url: str = DEFAULT_BASE_URL) -> None:
         self.base_url = base_url
 
+    def get_project(self, project_id: str) -> model.Project:
+        response = requests.get(f"{self.base_url}/projects/{project_id}")
+        if not response.ok:
+            raise HideClientError(response.text)
+        return model.Project.model_validate(response.json())
+
+    def get_projects(self) -> list[model.Project]:
+        response = requests.get(f"{self.base_url}/projects")
+        if not response.ok:
+            raise HideClientError(response.text)
+        return [model.Project.model_validate(project) for project in response.json()]
+
     def create_project(
         self,
         repository: model.Repository,
